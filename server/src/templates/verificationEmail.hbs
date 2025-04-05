@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
+        .container { background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #007BFF; }
+        .btn { background-color: #007BFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 15px; }
+        .footer { font-size: 12px; color: #888; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome, {{name}}!</h2>
+        <p>Click the button below to verify your email:</p>
+        <a href="{{verificationLink}}" class="btn">Verify Email</a>
+        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+        <p>{{verificationLink}}</p>
+        <p class="footer">This link will expire in 24 hours.</p>
+    </div>
+</body>
+</html>
