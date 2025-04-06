@@ -18,6 +18,9 @@ const socket = io(SERVER_URL, {
   secure: true,
   rejectUnauthorized: false,
   forceNew: true,
+  auth: {
+    origin: window.location.origin,
+  },
 });
 
 // Track connection status

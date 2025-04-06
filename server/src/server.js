@@ -28,8 +28,13 @@ const allowedOrigins = [
   "https://dev-connect-theta-nine.vercel.app",
   "dev-connect-theta-nine.vercel.app",
 
-  // Allow all Vercel deployments
+  // Netlify domains
+  "https://resonant-travesseiro-f21083.netlify.app",
+  "resonant-travesseiro-f21083.netlify.app",
+
+  // Allow all deployment domains
   /.*\.vercel\.app$/,
+  /.*\.netlify\.app$/,
 ];
 
 const app = express();
