@@ -1,0 +1,23 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Production context: all deploys from the Production branch set in your site's 
+# deploy contexts will inherit these settings.
+[context.production.environment]
+  VITE_SERVER_URL = "https://dev-connect-eight-rosy.vercel.app"
+
+# Branch deploy context: all deploys that are not from a pull/merge request or 
+# from the Production branch will inherit these settings.
+[context.branch-deploy.environment]
+  VITE_SERVER_URL = "https://dev-connect-eight-rosy.vercel.app"
+
+# Specific branch context: all deploys from this specific branch will inherit these settings.
+[context.develop.environment] 
+  VITE_SERVER_URL = "https://dev-connect-eight-rosy.vercel.app"
+
+# For all pages, redirect to index.html for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 

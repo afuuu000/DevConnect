@@ -15,6 +15,26 @@ import commentRoutes from "./routes/commentRoutes.js";
 import { errorMiddleware } from "./middlewares/errorMiddleware.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
+// Define allowed origins for CORS
+const allowedOrigins = [
+  // Local development
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:5000",
+
+  // Production domains
+  "https://dev-connect-client.vercel.app",
+  "https://dev-connect-eight-rosy.vercel.app",
+
+  // Netlify domains - add your actual Netlify domain here
+  "https://devconnect-social.netlify.app",
+  "https://devconnect-app.netlify.app",
+  "https://main--devconnect-social.netlify.app",
+
+  // Allow Netlify preview deployments
+  /\.netlify\.app$/,
+];
+
 const app = express();
 app.use(express.json()); // ✅ Ensures JSON request bodies are parsed
 app.use(express.urlencoded({ extended: true })); // ✅ Allows form data
@@ -22,15 +42,38 @@ app.use(express.urlencoded({ extended: true })); // ✅ Allows form data
 const server = http.createServer(app); // Create HTTP Server
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "http://localhost:5000",
-    ],
+    // For Socket.io, we need to handle both string and regex origins
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if origin matches any string in allowedOrigins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Check if origin matches any regex in allowedOrigins
+      for (const pattern of allowedOrigins) {
+        if (pattern instanceof RegExp && pattern.test(origin)) {
+          return callback(null, true);
+        }
+      }
+
+      // Origin not allowed
+      console.log(`❌ Origin blocked by CORS: ${origin}`);
+      return callback(
+        new Error(`CORS not allowed for origin: ${origin}`),
+        false
+      );
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   },
+  // Additional Socket.io configuration for better stability
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  transports: ["websocket", "polling"],
 });
 
 // ✅ Store active user connections
@@ -44,11 +87,29 @@ db.authenticate()
 app.use(express.json());
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "http://localhost:5000",
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if origin matches any string in allowedOrigins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Check if origin matches any regex in allowedOrigins
+      for (const pattern of allowedOrigins) {
+        if (pattern instanceof RegExp && pattern.test(origin)) {
+          return callback(null, true);
+        }
+      }
+
+      // Origin not allowed
+      console.log(`❌ Express CORS blocked origin: ${origin}`);
+      return callback(
+        new Error(`CORS not allowed for origin: ${origin}`),
+        false
+      );
+    },
     credentials: true, // ✅ Allow cookies, authorization headers
     methods: ["GET", "POST", "PUT", "DELETE"], // ✅ Specify allowed methods
     allowedHeaders: ["Content-Type", "Authorization"], // ✅ Allow required headers
@@ -79,6 +140,13 @@ io.on("connection", (socket) => {
     );
     onlineUsers.set(userId, socket.id);
     socket.join(userId.toString()); // Ensure userId is a string for room name
+
+    // Send acknowledgment back to client
+    socket.emit("joinAcknowledged", {
+      userId,
+      success: true,
+      message: "Successfully joined your notification channel",
+    });
   });
 
   // ✅ Handle follow/unfollow events
@@ -86,36 +154,55 @@ io.on("connection", (socket) => {
     console.log("👥 Follow action event:", data);
     const { followerId, targetUserId, isFollowing } = data;
 
-    // Broadcast to all connected clients
-    io.emit("followUpdate", {
-      followerId,
-      targetUserId,
-      isFollowing,
-    });
+    if (!followerId || !targetUserId) {
+      console.log("⚠️ Invalid follow action data:", data);
+      return;
+    }
 
-    // Send notification to target user
-    if (isFollowing) {
-      const followerUser = onlineUsers.get(followerId);
-      if (followerUser) {
+    try {
+      // Broadcast to all connected clients
+      io.emit("followUpdate", {
+        followerId,
+        targetUserId,
+        isFollowing,
+      });
+
+      // Send notification to target user
+      if (isFollowing) {
         io.to(targetUserId.toString()).emit("notification", {
           userId: targetUserId,
           type: "follow",
           message: `Someone started following you!`,
         });
       }
+    } catch (error) {
+      console.error("❌ Error in followAction event:", error);
     }
   });
 
   // ✅ Handle post approval/rejection notifications
   socket.on("postStatus", (data) => {
     console.log("📩 Post status event:", data);
-    const { userId, message } = data;
-    io.to(userId).emit("newNotification", { message }); // Notify user about post status
+    try {
+      const { userId, message } = data;
+      if (!userId) {
+        console.log("⚠️ Invalid postStatus data:", data);
+        return;
+      }
+      io.to(userId.toString()).emit("newNotification", { message }); // Notify user about post status
+    } catch (error) {
+      console.error("❌ Error in postStatus event:", error);
+    }
+  });
+
+  // Handle errors on this socket
+  socket.on("error", (error) => {
+    console.error("❌ Socket error:", socket.id, error);
   });
 
   // ✅ Handle disconnect
-  socket.on("disconnect", () => {
-    console.log("🔴 User disconnected:", socket.id);
+  socket.on("disconnect", (reason) => {
+    console.log("🔴 User disconnected:", socket.id, "Reason:", reason);
     // Remove user from online users map
     for (const [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
@@ -129,7 +216,20 @@ io.on("connection", (socket) => {
 
 // ✅ Helper function to send notifications
 export const sendNotification = (userId, message) => {
-  io.to(userId).emit("newNotification", { message });
+  if (!userId) {
+    console.error("❌ sendNotification called without userId:", {
+      userId,
+      message,
+    });
+    return;
+  }
+
+  try {
+    io.to(userId.toString()).emit("newNotification", { message });
+    console.log(`✅ Notification sent to user ${userId}: ${message}`);
+  } catch (error) {
+    console.error(`❌ Error sending notification to user ${userId}:`, error);
+  }
 };
 
 // ✅ Routes

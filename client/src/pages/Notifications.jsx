@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { io } from "socket.io-client";
+import socket, { safeEmit, isSocketConnected } from "../utils/socket"; // Import shared socket instance and helpers
 import {
   Bell,
   Check,
@@ -12,38 +12,76 @@ import {
   UserPlus,
   AlertTriangle,
   RefreshCw,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-
-const socket = io("http://localhost:5000"); // Connect WebSocket to backend
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // all, unread, read
+  const [socketConnected, setSocketConnected] = useState(false);
   const userId = localStorage.getItem("userId"); // Get logged-in user ID
+
+  // Track socket connection status
+  useEffect(() => {
+    const checkConnection = () => {
+      setSocketConnected(isSocketConnected());
+    };
+
+    // Check initial state
+    checkConnection();
+
+    // Set up event listeners
+    socket.on("connect", checkConnection);
+    socket.on("disconnect", checkConnection);
+
+    return () => {
+      socket.off("connect", checkConnection);
+      socket.off("disconnect", checkConnection);
+    };
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
 
     // ✅ Connect WebSocket for real-time notifications
     if (userId) {
-      socket.emit("join", userId); // Join user's notification room
+      // Use the safe emit function that handles errors
+      safeEmit("join", userId, (response) => {
+        if (response && response.error) {
+          console.error("Error joining notification room:", response.error);
+        } else {
+          console.log("Successfully joined notification room");
+        }
+      });
 
       socket.on("newNotification", handleNewNotification);
+
+      // Listen for join acknowledgment
+      socket.on("joinAcknowledged", (data) => {
+        console.log("Join acknowledged:", data);
+      });
     }
 
     return () => {
       socket.off("newNotification"); // Clean up WebSocket listener
+      socket.off("joinAcknowledged");
     };
   }, [userId]);
 
   const fetchNotifications = async () => {
     try {
       setLoading(true);
+
+      // Use the API_URL from environment variable if available
+      const API_URL =
+        import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+
       // ✅ Fetch existing notifications from backend
-      const res = await axios.get("http://localhost:5000/api/notifications", {
+      const res = await axios.get(`${API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
@@ -57,8 +95,11 @@ const Notifications = () => {
           user: {
             id: notification.userId || notification.user?.id || "unknown",
             name:
-              notification.userName,
-          
+              notification.userName ||
+              notification.user?.name ||
+              "Unknown User",
+            avatar:
+              notification.userAvatar || notification.user?.avatar || null,
           },
         };
       });
@@ -195,6 +236,28 @@ const Notifications = () => {
           <div className="flex items-center gap-3">
             <Bell className="w-6 h-6 text-cyan-400" />
             <h1 className="text-xl font-bold text-white">Notifications</h1>
+
+            {/* Socket connection indicator */}
+            <div
+              className="ml-2 flex items-center text-xs"
+              title={
+                socketConnected
+                  ? "Real-time updates connected"
+                  : "Real-time updates disconnected"
+              }
+            >
+              {socketConnected ? (
+                <>
+                  <Wifi size={12} className="text-green-400 mr-1" />{" "}
+                  <span className="text-green-400">Connected</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff size={12} className="text-rose-400 mr-1" />{" "}
+                  <span className="text-rose-400">Disconnected</span>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -277,7 +340,6 @@ const Notifications = () => {
                 {/* User Avatar with notification type indicator */}
                 <div className="flex-shrink-0">
                   <div className="relative">
-                  
                     {/* Type indicator at the bottom right of avatar - only show for specific types */}
                     {notification.type && notification.type !== "follow" && (
                       <div
