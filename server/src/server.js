@@ -27,7 +27,7 @@ const allowedOrigins = [
   "https://dev-connect-eight-rosy.vercel.app",
 
   // Netlify domains - add your actual Netlify domain here
-  "https://devconnect-social.netlify.app",
+  "https://resonant-travesseiro-f21083.netlify.app",
   "https://devconnect-app.netlify.app",
   "https://main--devconnect-social.netlify.app",
 
