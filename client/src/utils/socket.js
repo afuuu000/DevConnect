@@ -1,7 +1,8 @@
 import { io } from "socket.io-client";
+import dotenv from "dotenv";
+dotenv.config({ path: "./.env" }); // Load environment variables
 
-// Create a singleton socket instance with consistent configuration
-const socket = io("http://localhost:5000", {
+const socket = io(import.meta.env.VITE_SERVER_URL, {
   withCredentials: true,
   transports: ["websocket", "polling"],
   reconnection: true,
