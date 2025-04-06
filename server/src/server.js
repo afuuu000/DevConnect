@@ -42,7 +42,6 @@ app.use(express.urlencoded({ extended: true })); // ✅ Allows form data
 const server = http.createServer(app); // Create HTTP Server
 const io = new Server(server, {
   cors: {
-    // For Socket.io, we need to handle both string and regex origins
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl requests)
       if (!origin) return callback(null, true);
@@ -70,10 +69,13 @@ const io = new Server(server, {
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   },
-  // Additional Socket.io configuration for better stability
+  path: "/socket.io/",
+  transports: ["websocket", "polling"],
   pingTimeout: 60000,
   pingInterval: 25000,
-  transports: ["websocket", "polling"],
+  upgradeTimeout: 30000,
+  allowUpgrades: true,
+  cookie: false,
 });
 
 // ✅ Store active user connections

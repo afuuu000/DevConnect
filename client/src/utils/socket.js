@@ -14,6 +14,9 @@ const socket = io(SERVER_URL, {
   reconnectionDelayMax: 10000,
   timeout: 20000,
   autoConnect: true,
+  path: "/socket.io/",
+  secure: true,
+  rejectUnauthorized: false,
 });
 
 // Track connection status
