@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
-// Determine the server URL - fallback to localhost if env variable isn't set
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+// Force the server URL to be the one we want
+const SERVER_URL = "https://dev-connect-theta-nine.vercel.app";
 
 console.log("🔌 Socket connecting to server:", SERVER_URL);
 
