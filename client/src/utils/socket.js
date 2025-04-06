@@ -18,9 +18,6 @@ const socket = io(SERVER_URL, {
   secure: true,
   rejectUnauthorized: false,
   forceNew: true,
-  auth: {
-    token: localStorage.getItem("token"),
-  },
 });
 
 // Track connection status
@@ -28,19 +25,11 @@ let isConnected = false;
 let connectionAttempts = 0;
 const maxConnectionAttempts = 5;
 
-// Add connection status logging
-socket.on("connect", () => {
-  console.log("✅ Socket connected successfully");
-  console.log("Socket ID:", socket.id);
-  console.log("Connected to:", SERVER_URL);
-  isConnected = true;
-  connectionAttempts = 0;
-});
-
+// Enhanced error logging
 socket.on("connect_error", (error) => {
-  console.error("❌ Socket connection error:", error.message);
-  console.log("Failed connecting to:", SERVER_URL);
-  console.log("Current origin:", window.location.origin);
+  console.error("Socket Connection Error:", error.message);
+  console.log("Current URL:", SERVER_URL);
+  console.log("Current Origin:", window.location.origin);
   connectionAttempts++;
 
   // If we're on a production domain but using localhost, that's a common mistake
@@ -62,9 +51,17 @@ socket.on("connect_error", (error) => {
   }
 });
 
+socket.on("connect", () => {
+  console.log("Socket Connected Successfully!");
+  console.log("Socket ID:", socket.id);
+  console.log("Connected to:", SERVER_URL);
+  isConnected = true;
+  connectionAttempts = 0;
+});
+
 socket.on("disconnect", (reason) => {
+  console.log("Socket Disconnected. Reason:", reason);
   isConnected = false;
-  console.log("🔌 Socket disconnected:", reason);
 
   // If the server disconnected us, try to reconnect
   if (reason === "io server disconnect") {

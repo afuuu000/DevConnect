@@ -23,6 +23,8 @@ const allowedOrigins = [
   "http://localhost:5000",
 
   // Production domains - exact matches
+  "https://dev-connect-eight-rosy.vercel.app",
+  "dev-connect-eight-rosy.vercel.app",
   "https://dev-connect-theta-nine.vercel.app",
   "dev-connect-theta-nine.vercel.app",
 
