@@ -25,14 +25,18 @@ const allowedOrigins = [
   // Production domains
   "https://dev-connect-client.vercel.app",
   "https://dev-connect-eight-rosy.vercel.app",
+  "dev-connect-eight-rosy.vercel.app",
+  "https://dev-connect-eight.vercel.app",
+  "dev-connect-eight.vercel.app",
 
-  // Netlify domains - add your actual Netlify domain here
+  // Netlify domains
   "https://resonant-travesseiro-f21083.netlify.app",
   "https://devconnect-app.netlify.app",
   "https://main--devconnect-social.netlify.app",
 
   // Allow Netlify preview deployments
   /\.netlify\.app$/,
+  /\.vercel\.app$/,
 ];
 
 const app = express();
@@ -42,29 +46,7 @@ app.use(express.urlencoded({ extended: true })); // ✅ Allows form data
 const server = http.createServer(app); // Create HTTP Server
 const io = new Server(server, {
   cors: {
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl requests)
-      if (!origin) return callback(null, true);
-
-      // Check if origin matches any string in allowedOrigins
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // Check if origin matches any regex in allowedOrigins
-      for (const pattern of allowedOrigins) {
-        if (pattern instanceof RegExp && pattern.test(origin)) {
-          return callback(null, true);
-        }
-      }
-
-      // Origin not allowed
-      console.log(`❌ Origin blocked by CORS: ${origin}`);
-      return callback(
-        new Error(`CORS not allowed for origin: ${origin}`),
-        false
-      );
-    },
+    origin: "*", // Allow all origins for WebSocket
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -89,36 +71,20 @@ db.authenticate()
 app.use(express.json());
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl requests)
-      if (!origin) return callback(null, true);
-
-      // Check if origin matches any string in allowedOrigins
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // Check if origin matches any regex in allowedOrigins
-      for (const pattern of allowedOrigins) {
-        if (pattern instanceof RegExp && pattern.test(origin)) {
-          return callback(null, true);
-        }
-      }
-
-      // Origin not allowed
-      console.log(`❌ Express CORS blocked origin: ${origin}`);
-      return callback(
-        new Error(`CORS not allowed for origin: ${origin}`),
-        false
-      );
-    },
-    credentials: true, // ✅ Allow cookies, authorization headers
-    methods: ["GET", "POST", "PUT", "DELETE"], // ✅ Specify allowed methods
-    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Allow required headers
+    origin: true, // Allow all origins in development
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "unsafe-none" },
+    contentSecurityPolicy: false,
+  })
+);
 
 // Attach `io` to `req` object in routes
 app.use((req, res, next) => {

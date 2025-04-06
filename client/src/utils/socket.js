@@ -17,6 +17,9 @@ const socket = io(SERVER_URL, {
   path: "/socket.io/",
   secure: true,
   rejectUnauthorized: false,
+  extraHeaders: {
+    "Access-Control-Allow-Origin": "*",
+  },
 });
 
 // Track connection status
