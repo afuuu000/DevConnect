@@ -22,21 +22,12 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5000",
 
-  // Production domains
-  "https://dev-connect-theta-nine.vercel.app/",
-  "https://dev-connect-eight-rosy.vercel.app",
-  "dev-connect-eight-rosy.vercel.app",
-  "https://dev-connect-eight.vercel.app",
-  "dev-connect-eight.vercel.app",
+  // Production domains - exact matches
+  "https://dev-connect-theta-nine.vercel.app",
+  "dev-connect-theta-nine.vercel.app",
 
-  // Netlify domains
-  "https://resonant-travesseiro-f21083.netlify.app",
-  "https://devconnect-app.netlify.app",
-  "https://main--devconnect-social.netlify.app",
-
-  // Allow Netlify preview deployments
-  /\.netlify\.app$/,
-  /\.vercel\.app$/,
+  // Allow all Vercel deployments
+  /.*\.vercel\.app$/,
 ];
 
 const app = express();
@@ -46,7 +37,25 @@ app.use(express.urlencoded({ extended: true })); // ✅ Allows form data
 // Configure CORS for Express
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if origin matches any string in allowedOrigins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Check if origin matches any regex pattern
+      for (const pattern of allowedOrigins) {
+        if (pattern instanceof RegExp && pattern.test(origin)) {
+          return callback(null, true);
+        }
+      }
+
+      console.log("Blocked origin:", origin);
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -67,12 +76,29 @@ const server = http.createServer(app);
 // Configure Socket.IO with more detailed settings
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if origin matches any string in allowedOrigins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Check if origin matches any regex pattern
+      for (const pattern of allowedOrigins) {
+        if (pattern instanceof RegExp && pattern.test(origin)) {
+          return callback(null, true);
+        }
+      }
+
+      console.log("Blocked socket origin:", origin);
+      callback(new Error("Not allowed by CORS"));
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   },
-  allowEIO3: true,
   path: "/socket.io/",
   transports: ["websocket", "polling"],
   pingTimeout: 60000,
@@ -81,8 +107,6 @@ const io = new Server(server, {
   allowUpgrades: true,
   cookie: false,
   serveClient: false,
-  connectTimeout: 45000,
-  maxHttpBufferSize: 1e8,
 });
 
 // ✅ Store active user connections

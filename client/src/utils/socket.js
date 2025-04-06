@@ -9,21 +9,15 @@ const socket = io(SERVER_URL, {
   withCredentials: true,
   transports: ["websocket", "polling"],
   reconnection: true,
-  reconnectionAttempts: 10,
-  reconnectionDelay: 2000,
-  reconnectionDelayMax: 10000,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
   timeout: 20000,
   autoConnect: true,
   path: "/socket.io/",
   secure: true,
   rejectUnauthorized: false,
   forceNew: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  randomizationFactor: 0.5,
-  timeout: 20000,
-  autoConnect: true,
   auth: {
     token: localStorage.getItem("token"),
   },
@@ -34,22 +28,20 @@ let isConnected = false;
 let connectionAttempts = 0;
 const maxConnectionAttempts = 5;
 
-// Add event listeners for connection status
+// Add connection status logging
 socket.on("connect", () => {
+  console.log("✅ Socket connected successfully");
+  console.log("Socket ID:", socket.id);
+  console.log("Connected to:", SERVER_URL);
   isConnected = true;
   connectionAttempts = 0;
-  console.log("✅ Socket connected:", socket.id);
 });
 
 socket.on("connect_error", (error) => {
+  console.error("❌ Socket connection error:", error.message);
+  console.log("Failed connecting to:", SERVER_URL);
+  console.log("Current origin:", window.location.origin);
   connectionAttempts++;
-  console.error(
-    `❌ Socket connection error (${connectionAttempts}/${maxConnectionAttempts}):`,
-    error.message
-  );
-  console.error(
-    "This may happen if the server is not running or CORS is blocking the connection."
-  );
 
   // If we're on a production domain but using localhost, that's a common mistake
   if (
