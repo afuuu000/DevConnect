@@ -17,8 +17,15 @@ const socket = io(SERVER_URL, {
   path: "/socket.io/",
   secure: true,
   rejectUnauthorized: false,
-  extraHeaders: {
-    "Access-Control-Allow-Origin": "*",
+  forceNew: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  randomizationFactor: 0.5,
+  timeout: 20000,
+  autoConnect: true,
+  auth: {
+    token: localStorage.getItem("token"),
   },
 });
 

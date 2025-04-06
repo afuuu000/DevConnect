@@ -43,14 +43,36 @@ const app = express();
 app.use(express.json()); // ✅ Ensures JSON request bodies are parsed
 app.use(express.urlencoded({ extended: true })); // ✅ Allows form data
 
-const server = http.createServer(app); // Create HTTP Server
+// Configure CORS for Express
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Configure Helmet with relaxed settings for WebSocket
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "unsafe-none" },
+    contentSecurityPolicy: false,
+  })
+);
+
+const server = http.createServer(app);
+
+// Configure Socket.IO with more detailed settings
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins for WebSocket
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   },
+  allowEIO3: true,
   path: "/socket.io/",
   transports: ["websocket", "polling"],
   pingTimeout: 60000,
@@ -58,6 +80,9 @@ const io = new Server(server, {
   upgradeTimeout: 30000,
   allowUpgrades: true,
   cookie: false,
+  serveClient: false,
+  connectTimeout: 45000,
+  maxHttpBufferSize: 1e8,
 });
 
 // ✅ Store active user connections
@@ -67,24 +92,6 @@ const onlineUsers = new Map();
 db.authenticate()
   .then(() => console.log("Database connected..."))
   .catch((err) => console.error("Error connecting to database:", err));
-
-app.use(express.json());
-app.use(
-  cors({
-    origin: true, // Allow all origins in development
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "unsafe-none" },
-    contentSecurityPolicy: false,
-  })
-);
 
 // Attach `io` to `req` object in routes
 app.use((req, res, next) => {
