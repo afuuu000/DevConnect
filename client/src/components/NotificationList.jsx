@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { X, Heart, MessageCircle, UserPlus, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
+import config from "../config";
 
 export default function NotificationList({ onClose }) {
   const [notifications, setNotifications] = useState([]);
@@ -13,14 +14,11 @@ export default function NotificationList({ onClose }) {
       try {
         setIsLoading(true);
         const token = localStorage.getItem("token");
-        const response = await fetch(
-          "http://localhost:5000/api/notifications",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${config.apiUrl}/api/notifications`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) throw new Error("Failed to fetch notifications");
         const data = await response.json();
@@ -35,8 +33,7 @@ export default function NotificationList({ onClose }) {
               id: notification.userId || notification.user?.id || "unknown",
               name:
                 notification.userName ||
-                notification.user?.name ||
-                "Unknown User",
+                notification.user?.name ,
               avatar:
                 notification.userAvatar ||
                 notification.user?.avatar ||
@@ -126,7 +123,6 @@ export default function NotificationList({ onClose }) {
                   {/* User Avatar */}
                   <div className="flex-shrink-0">
                     <div className="relative">
-                  
                       {notification.type && notification.type !== "follow" && (
                         <div
                           className={`absolute -bottom-1 -right-1 rounded-full p-1 ${getNotificationBg(

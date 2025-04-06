@@ -28,12 +28,13 @@ import ManageUsers from "./pages/ManageUsers";
 import ManagePosts from "./pages/ManagePosts";
 import AdminLayout from "./components/AdminLayout";
 import AuthLayout from "./components/AuthLayout";
+import config from "./config";
 
 function App() {
   const [googleClientId, setGoogleClientId] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/config/google").then((res) => {
+    axios.get(`${config.apiUrl}/api/config/google`).then((res) => {
       setGoogleClientId(res.data.googleClientId);
     });
   }, []);

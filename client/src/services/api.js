@@ -1,8 +1,12 @@
 import axios from "axios";
+import config from "../config";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: `${config.apiUrl}/api`,
   withCredentials: true, // ✅ Ensure credentials (cookies/auth headers) are included
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 // ✅ Explicitly allow CORS headers (DO NOT add Access-Control-Allow-Credentials)

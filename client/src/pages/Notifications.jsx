@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import config from "../config";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -76,9 +77,8 @@ const Notifications = () => {
     try {
       setLoading(true);
 
-      // Use the API_URL from environment variable if available
-      const API_URL =
-        import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+      // Use the API_URL from config
+      const API_URL = config.apiUrl;
 
       // ✅ Fetch existing notifications from backend
       const res = await axios.get(`${API_URL}/api/notifications`, {
@@ -96,8 +96,7 @@ const Notifications = () => {
             id: notification.userId || notification.user?.id || "unknown",
             name:
               notification.userName ||
-              notification.user?.name ||
-              "Unknown User",
+              notification.user?.name ,
             avatar:
               notification.userAvatar || notification.user?.avatar || null,
           },
@@ -142,7 +141,7 @@ const Notifications = () => {
 
       // Send request to backend
       await axios.post(
-        "http://localhost:5000/api/notifications/read",
+        `${config.apiUrl}/api/notifications/read`,
         { id: notificationId },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -161,7 +160,7 @@ const Notifications = () => {
       );
 
       await axios.delete(
-        `http://localhost:5000/api/notifications/${notificationId}`,
+        `${config.apiUrl}/api/notifications/${notificationId}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -178,7 +177,7 @@ const Notifications = () => {
       );
 
       await axios.post(
-        "http://localhost:5000/api/notifications/read-all",
+        `${config.apiUrl}/api/notifications/read-all`,
         {},
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },

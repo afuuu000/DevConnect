@@ -6,6 +6,7 @@ import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import NotificationList from "./NotificationList";
 import socket from "../utils/socket";
+import config from "../config";
 
 export default function Navbar({ onMenuClick }) {
   const { user } = useContext(AuthContext);
@@ -29,14 +30,11 @@ export default function Navbar({ onMenuClick }) {
 
     const checkUnreadNotifications = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/notifications",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${config.apiUrl}/api/notifications`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await response.json();
         setHasUnreadNotifications(
           data.some((notification) => !notification.isRead)
@@ -138,8 +136,6 @@ export default function Navbar({ onMenuClick }) {
           >
             <PlusSquare className="w-5 h-5" />
           </Link>
-
-         
         </div>
       </div>
 

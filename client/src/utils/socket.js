@@ -1,7 +1,8 @@
 import { io } from "socket.io-client";
+import config from "../config";
 
 // Force the server URL to be the one we want
-const SERVER_URL = "https://dev-connect-theta-nine.vercel.app";
+const SERVER_URL = config.socketUrl;
 
 console.log("🔌 Socket connecting to server:", SERVER_URL);
 
