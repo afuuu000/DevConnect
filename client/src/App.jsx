@@ -23,6 +23,7 @@ import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import EditProfile from "./pages/EditProfile";
 import FollowersPage from "./pages/FollowersPage";
 import FollowingPage from "./pages/FollowingPage";
+import PendingPosts from "./pages/PendingPosts";
 import AdminDashboard from "./pages/AdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
 import ManagePosts from "./pages/ManagePosts";
@@ -80,6 +81,7 @@ function App() {
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/search" element={<SearchResults />} />
                     <Route path="/edit-profile" element={<EditProfile />} />
+                    <Route path="/pending-posts" element={<PendingPosts />} />
                   </Route>
                 </Route>
 

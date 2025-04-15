@@ -325,7 +325,7 @@ export default function PostCard({ post, onDelete }) {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1 px-2 py-1 rounded-full hover:bg-gray-700/50 transition-colors"
+            className="flex items-center px-2 py-1 rounded-full hover:bg-gray-700/50 transition-colors"
             onClick={() =>
               document.getElementById(`comment-input-${post.id}`)?.focus()
             }
@@ -334,9 +334,6 @@ export default function PostCard({ post, onDelete }) {
               size={16}
               className="text-gray-300 hover:text-cyan-400"
             />
-            <span className="text-xs text-gray-400">
-              {comments.length > 0 ? comments.length : "Comment"}
-            </span>
           </motion.button>
         </div>
 

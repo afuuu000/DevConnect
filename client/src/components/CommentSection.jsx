@@ -150,77 +150,33 @@ export default function CommentSection({
     <div className="space-y-2 pt-1">
       {/* Collapsed View - Show only top comment */}
       {!showAllComments && (
-        <div className="space-y-2 px-3">
+        <div className="space-y-1 px-3">
           {topComment && (
-            <div className="flex items-start gap-2 py-1">
-              <div
-                className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 cursor-pointer"
+            <div className="flex items-center">
+              <span
+                className="font-medium text-xs text-white hover:text-cyan-400 cursor-pointer transition-colors"
                 onClick={() =>
                   handleProfileClick(topComment.userId || topComment.User?.id)
                 }
               >
-                {getAvatarPath(topComment) ? (
-                  <img
-                    src={getAvatarPath(topComment)}
-                    alt={`${getUserName(topComment)}'s avatar`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.style.display = "none";
-                      e.target.parentNode.classList.add(
-                        getAvatarColor(getUserName(topComment))
-                      );
-                      e.target.parentNode.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white font-bold">${getInitial(
-                        getUserName(topComment)
-                      )}</div>`;
-                    }}
-                  />
-                ) : (
-                  <div
-                    className={`w-full h-full flex items-center justify-center text-white font-bold ${getAvatarColor(
-                      getUserName(topComment)
-                    )}`}
-                  >
-                    {getInitial(getUserName(topComment))}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="bg-gray-800/60 rounded-lg p-2">
-                  <span
-                    className="font-medium text-xs text-white hover:text-cyan-400 cursor-pointer transition-colors"
-                    onClick={() =>
-                      handleProfileClick(
-                        topComment.userId || topComment.User?.id
-                      )
-                    }
-                  >
-                    {getUserName(topComment)}
-                  </span>
-                  <p className="text-gray-300 text-xs mt-0.5">
-                    {topComment.text}
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 ml-2 mt-0.5 inline-block">
-                  {formatDistanceToNow(new Date(topComment.createdAt), {
-                    addSuffix: true,
-                  })}
-                </span>
-              </div>
+                {getUserName(topComment)}
+              </span>
+              <span className="text-gray-300 text-xs mx-1.5">
+                {topComment.text}
+              </span>
             </div>
           )}
 
-          {/* View all comments button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            onClick={toggleComments}
-            className="w-full py-1.5 text-gray-400 hover:text-cyan-400 text-xs font-medium flex items-center justify-center gap-1 bg-gray-800/30 rounded-lg transition-colors"
-          >
-            <ChevronDown size={14} />
-            {comments.length > 0
-              ? `View all ${comments.length} comments`
-              : "Add a comment"}
-          </motion.button>
+          {/* Simplified text indicating comment count, clicking anywhere will expand comments */}
+          {comments.length > 0 && (
+            <div onClick={toggleComments} className="cursor-pointer">
+              <span className="text-xs text-gray-400 hover:text-gray-300 transition-colors">
+                {comments.length === 1
+                  ? "View 1 comment"
+                  : `View all ${comments.length} comments`}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -419,20 +375,7 @@ export default function CommentSection({
         </div>
       </form>
 
-      {/* Quick Comment Button (when collapsed) */}
-      {!showAllComments && !isInputFocused && (
-        <div className="flex justify-center px-3 pb-1.5">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={focusCommentInput}
-            className="w-full text-xs font-medium text-cyan-400 hover:text-cyan-300 py-1.5 px-3 rounded-lg bg-cyan-900/10 hover:bg-cyan-900/20 transition-colors flex items-center justify-center gap-1.5"
-          >
-            <MessageCircle size={14} />
-            <span>Write a comment</span>
-          </motion.button>
-        </div>
-      )}
+      
     </div>
   );
 }

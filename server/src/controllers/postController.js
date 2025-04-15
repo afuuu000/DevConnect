@@ -247,3 +247,31 @@ export const getComments = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// ✅ Get Current User's Pending Posts
+export const getUserPendingPosts = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const userId = req.user.id;
+
+    const pendingPosts = await Post.findAll({
+      where: {
+        userId,
+        status: "pending", // Only fetch pending posts
+      },
+      include: {
+        model: User,
+        attributes: ["id", "name", "avatar"],
+      },
+      order: [["createdAt", "DESC"]], // Show newest posts first
+    });
+
+    res.json(pendingPosts);
+  } catch (error) {
+    console.error("❌ Error fetching user pending posts:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

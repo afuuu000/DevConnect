@@ -13,7 +13,9 @@ import {
   PlusSquare,
   Users,
   Heart,
+  FileQuestion,
 } from "lucide-react";
+import axios from "axios";
 
 const Sidebar = ({ isOpen, onToggle }) => {
   const { user, logout } = useContext(AuthContext);
@@ -21,6 +23,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
   const [following, setFollowing] = useState([]);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  const [pendingPostsCount, setPendingPostsCount] = useState(0);
   const location = useLocation();
 
   useEffect(() => {
@@ -79,9 +82,27 @@ const Sidebar = ({ isOpen, onToggle }) => {
       }
     };
 
+    // Fetch pending posts count
+    const fetchPendingPosts = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/posts/user/pending",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setPendingPostsCount(response.data.length);
+      } catch (error) {
+        console.error("Error fetching pending posts:", error);
+      }
+    };
+
     fetchFollowers();
     fetchFollowing();
     checkUnreadNotifications();
+    fetchPendingPosts();
 
     // Use the shared socket instance
     socket.on("notification", (data) => {
@@ -111,7 +132,8 @@ const Sidebar = ({ isOpen, onToggle }) => {
     onToggle();
   };
 
-  const menuItems = [
+  // Define the main menu items including the conditional Pending Posts item
+  let menuItems = [
     { path: "/explore", name: "Explore", icon: Home },
     { path: `/profile/${user?.id}`, name: "Profile", icon: User },
     {
@@ -122,6 +144,17 @@ const Sidebar = ({ isOpen, onToggle }) => {
     },
     { path: "/create-post", name: "Create", icon: PlusSquare },
   ];
+
+  // Add pending posts item if user has pending posts
+  if (pendingPostsCount > 0) {
+    menuItems.push({
+      path: "/pending-posts",
+      name: "Pending Posts",
+      icon: FileQuestion,
+      count: pendingPostsCount,
+      highlight: true,
+    });
+  }
 
   return (
     <>
@@ -145,7 +178,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
         </div>
 
         {/* Main Navigation */}
-        <nav className="p-4 flex-1">
+        <nav className="p-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
           <div className="space-y-1">
             {menuItems.map((item) => (
               <Link
@@ -153,7 +186,11 @@ const Sidebar = ({ isOpen, onToggle }) => {
                 to={item.path}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   isActive(item.path)
-                    ? "bg-cyan-600/20 text-cyan-400"
+                    ? item.highlight
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "bg-cyan-600/20 text-cyan-400"
+                    : item.highlight
+                    ? "text-amber-400 hover:bg-gray-800 hover:text-amber-300"
                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
                 }`}
                 onClick={() => {
@@ -171,6 +208,11 @@ const Sidebar = ({ isOpen, onToggle }) => {
                   )}
                 </div>
                 <span className="font-medium">{item.name}</span>
+                {item.count && (
+                  <span className="ml-auto text-xs bg-gray-800 px-2 py-0.5 rounded-full">
+                    {item.count}
+                  </span>
+                )}
                 {item.hasIndicator && (
                   <span className="ml-auto w-2 h-2 bg-cyan-500 rounded-full"></span>
                 )}
